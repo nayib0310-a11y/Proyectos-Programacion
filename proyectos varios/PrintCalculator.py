@@ -46,9 +46,9 @@ while True:
                 i -= 1
             i += 1
 
-        # --- PASO 4: MOSTRAR RESULTADO ---
         resultadoF = elementos[0]
-        print(f"\n✅ El resultado es: {resultadoF}")
+        print(f"\n El resultado es: {resultadoF}")
+        
 
     except ValueError:
         print('Los caracteres agregados no pertenecen al sistema, chao')
