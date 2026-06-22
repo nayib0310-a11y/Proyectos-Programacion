@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Académico</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/style.css') }}">
+    {% block styles %}{% endblock %} {# Este bloque puede quedar para estilos muy específicos si los necesitaras en el futuro #}
+</head>
+<body>
+    <header>
+        <h1>Sistema Académico</h1>
+    </header>
+    <nav>
+        {% if 'username' in session %}
+            <a href="{{ url_for('home') }}">Inicio</a>
+            <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+            <span style="float: right;">Bienvenido, {{ session['fullname'] }} ({{ session['role'] }})</span>
+        {% else %}
+            <a href="{{ url_for('login') }}">Iniciar Sesión</a>
+            <a href="{{ url_for('register') }}">Registrarse</a>
+        {% endif %}
+    </nav>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+    {# Mantén el bloque scripts al final del body para un mejor rendimiento #}
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,6 @@
+MAT101|Matemáticas Básicas
+PROG101|Programación I
+BD101|Bases de Datos
+FIS101|Física General
+CAL101|Cálculo I
+ALG101|Álgebra Lineal
