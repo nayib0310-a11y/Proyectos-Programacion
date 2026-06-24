@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Panel Coordinador</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        function verHorario() {
+            var profId = document.getElementById("select_profesor").value;
+            window.location.href = "/coordinador?ver_profesor=" + profId;
+        }
+    </script>
+</head>
+<body>
+    <div class="header-bar">
+        <h1>Panel Coordinador</h1>
+        <a href="/logout" class="btn btn-red">Cerrar Sesión</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat, msg in messages %}<div class="alert {{ cat }}">{{ msg }}</div>{% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <h3>Acciones Rápidas</h3>
+        <div class="quick-actions">
+            <form method="POST">
+                <strong>Registrar Docente</strong>
+                <input type="hidden" name="accion" value="nuevo_docente">
+                <input type="text" name="nombre_doc" placeholder="Nombre" required>
+                <input type="text" name="usuario_doc" placeholder="Usuario" required>
+                <input type="text" name="pass_doc" placeholder="Pass" required>
+                <button type="submit" class="btn btn-block">Crear</button>
+            </form>
+            <form method="POST">
+                <strong>Crear Materia</strong>
+                <input type="hidden" name="accion" value="nueva_materia">
+                <input type="text" name="cod_mat" placeholder="Código" required>
+                <input type="text" name="nom_mat" placeholder="Nombre" required>
+                <button type="submit" class="btn btn-block">Crear</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="coord-grid">
+        <div class="card">
+            <h3>Planificar Oferta Académica</h3>
+            <form method="POST">
+                <input type="hidden" name="accion" value="nueva_seccion">
+                
+                <div class="form-group">
+                    <label>1. Materia:</label>
+                    <select name="codigo">
+                        {% for c, d in materias.items() %}<option value="{{ c }}">{{ d.nombre }}</option>{% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>2. Profesor:</label>
+                    <select name="profesor_user" id="select_profesor">
+                        {% for u, d in docentes.items() %}
+                            <option value="{{ u }}" {% if id_sel == u %}selected{% endif %}>{{ d.nombre_real }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" onclick="verHorario()" class="btn btn-block" style="background:#718096;">
+                        👁️ Ver Disponibilidad
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label>3. Asignación de Espacio:</label>
+                    <div class="form-row">
+                        <input type="text" name="seccion_txt" placeholder="Sección (Ej: D01)" required>
+                        <input type="text" name="aula_txt" placeholder="Aula (Ej: 1-15)" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>4. Día:</label>
+                    <select name="dia_idx">
+                        {% for d in dias %}<option value="{{ loop.index0 }}">{{ d }}</option>{% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>5. Hora Inicio - Fin:</label>
+                    <div class="form-row">
+                        <select name="hora_inicio_idx">
+                            {% for h in horas %}<option value="{{ loop.index0 }}">{{ h }}</option>{% endfor %}
+                        </select>
+                        <select name="hora_fin_idx">
+                            {% for h in horas %}<option value="{{ loop.index0 }}">{{ h }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-green btn-block">Crear Sección</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>
+                Disponibilidad: 
+                <span style="color:var(--accent-color);">
+                    {{ prof_sel.nombre_real if prof_sel else "Seleccione un profesor..." }}
+                </span>
+            </h3>
+            
+            {% if prof_sel %}
+            <table class="matrix">
+                <thead>
+                    <tr><th>Hora</th>{% for d in dias %}<th>{{ d[:3] }}</th>{% endfor %}</tr>
+                </thead>
+                <tbody>
+                    {% for h_idx in range(horas|length) %}
+                    <tr>
+                        <td style="white-space: nowrap; font-size: 12px;">{{ horas[h_idx] }}</td>
+                        {% for d_idx in range(dias|length) %}
+                            {% if prof_sel.disponibilidad[d_idx][h_idx] %}
+                                <td class="disponible">SI</td>
+                            {% else %}
+                                <td class="ocupado">.</td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="center-content text-muted" style="padding:20px;">Pulse "Ver Disponibilidad" para cargar la matriz.</p>
+            {% endif %}
+
+            <div class="mt-20">
+                <h4>Oferta Creada Recientemente:</h4>
+                <ul>
+                    {% for o in oferta[-5:] %}
+                        <li>
+                            <strong>{{ o.materia }}</strong> 
+                            [Sec: {{ o.seccion }} | Aula: {{ o.aula }}] <br>
+                            Prof: {{ o.profesor }} - {{ o.horario_txt }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

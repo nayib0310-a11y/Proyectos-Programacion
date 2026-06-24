@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inscripción</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="header-bar">
+        <h1>Estudiante: {{ session['nombre'] }}</h1>
+        <div>
+            <a href="/estudiante/comprobante" class="btn btn-green">📄 Generar Comprobante</a>
+            <a href="/logout" class="btn btn-red">Salir</a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat, msg in messages %}<div class="alert {{ cat }}">{{ msg }}</div>{% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="coord-grid">
+        <div class="card">
+            <h3>Oferta Académica</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Materia</th>
+                        <th>Horario</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for o in oferta %}
+                <tr>
+                    <td>
+                        <strong>{{ o.materia }}</strong><br>
+                        <small>{{ o.profesor }}</small>
+                    </td>
+                    <td>{{ o.horario_txt }}</td>
+                    <td>
+                        <form method="POST">
+                            <input type="hidden" name="oferta_id" value="{{ loop.index0 }}">
+                            <button type="submit" class="btn btn-sm">Inscribir</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="center-content">No hay materias ofertadas.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Mi Horario Actual</h3>
+            <table class="matrix">
+                <thead>
+                    <tr><th>Hora</th>{% for d in dias %}<th>{{ d[:3] }}</th>{% endfor %}</tr>
+                </thead>
+                <tbody>
+                    {% for h_idx in range(horas|length) %}
+                    <tr>
+                        <td style="font-size:11px; white-space: nowrap;">{{ horas[h_idx] }}</td>
+                        {% for d_idx in range(dias|length) %}
+                            {% set celda = estudiante.horario[d_idx][h_idx] %}
+                            {% if celda %}
+                                <td class="disponible" style="font-size:11px;">
+                                    {{ celda.materia[:10] }}..
+                                </td>
+                            {% else %}
+                                <td class="vacio"></td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

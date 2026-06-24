@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Comprobante</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="header-bar">
+        <a href="/estudiante" class="btn">Volver</a>
+        <button onclick="descargarComprobante()" class="btn btn-green">
+            ⬇️ Descargar PDF
+        </button>
+    </div>
+
+    <div id="contenido-pdf" style="padding: 20px;">
+        
+        <div class="center-content mb-40">
+         <h2>Universidad - Comprobante de Inscripción</h2>
+        </div>
+
+        <div class="card">
+    <div class="card-content">
+        <p><strong>Estudiante:</strong> {{ session['nombre'] }}</p>
+        <p><strong>Carrera:</strong> Ingeniería En Sistemas</p>
+        <p><strong>Fecha de emisión:</strong> {{ fecha }}</p>
+        <p><strong>Periodo:</strong> 2025-2026</p>
+    </div>
+</div>
+
+
+        <h3>Resumen de Materias</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Sección</th>
+                    <th>Materia</th>
+                    <th>Aula</th>
+                    <th>Profesor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in lista %}
+                <tr>
+                    <td style="font-weight:bold; color:var(--accent-color);">{{ item.seccion }}</td>
+                    <td>{{ item.materia }}</td>
+                    <td>{{ item.aula }}</td>
+                    <td>{{ item.profesor }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4">No posee inscripciones.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="mt-20">
+            <h3>Horario Detallado</h3>
+            <table class="matrix">
+                <thead>
+                    <tr><th>Hora</th>{% for d in dias %}<th>{{ d }}</th>{% endfor %}</tr>
+                </thead>
+                <tbody>
+                    {% for h_idx in range(horas|length) %}
+                    <tr>
+                        <td style="white-space: nowrap; font-size: 11px;">{{ horas[h_idx] }}</td>
+                        {% for d_idx in range(dias|length) %}
+                            {% set c = estudiante.horario[d_idx][h_idx] %}
+                            <td class="{{ 'disponible' if c else 'vacio' }}">
+                                {% if c %}
+                                    {{ c.materia }}<br>
+                                    <small>Aula: {{ c.aula }}</small>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        function descargarComprobante() {
+            var elemento = document.getElementById('contenido-pdf');
+            
+            var opt = {
+                margin:       0.5,
+                filename:     "Comprobante_{{ session['usuario'] }}.pdf",
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 }, 
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(elemento).save();
+        }
+    </script>
+</body>
+</html>
