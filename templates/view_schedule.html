@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="generic-schedule-view">
+        <h3>Horario de Clases</h3>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Materia</th>
+                        {% if role != 'student' %}
+                            <th>Profesor</th>
+                        {% endif %}
+                        <th>Día</th>
+                        <th>Hora Inicio</th>
+                        <th>Hora Fin</th>
+                        <th>Semestre</th>
+                        <th>Aula</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for schedule in schedules %}
+                        <tr>
+                            <td data-label="Materia">{{ schedule.subject }}</td>
+                            {% if role != 'student' %}
+                                <td data-label="Profesor">{{ schedule.teacher }}</td>
+                            {% endif %}
+                            <td data-label="Día">{{ schedule.day }}</td>
+                            <td data-label="Hora Inicio">{{ schedule.start_time }}</td>
+                            <td data-label="Hora Fin">{{ schedule.end_time }}</td>
+                            <td data-label="Semestre">{{ schedule.semester }}</td>
+                            <td data-label="Aula">{{ schedule.classroom }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="{% if role != 'student' %}7{% else %}6{% endif %}" style="text-align: center;">No hay horarios registrados.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="admin-container">
+        <h2>Agregar Nuevo Horario</h2>
+        
+        <form method="POST" action="{{ url_for('coordinator_dashboard') }}" onsubmit="return validateTime()">
+            <div class="form-group">
+                <label for="teacher">Profesor:</label>
+                <select id="teacher" name="teacher" required>
+                    <option value="" disabled selected>Seleccione un profesor...</option>
+                    {% for teacher in teachers %}
+                        <option value="{{ teacher.fullname }}">{{ teacher.fullname }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="subject">Materia:</label>
+                <select id="subject" name="subject" required>
+                    <option value="" disabled selected>Seleccione una materia...</option>
+                    {% for subject in subjects %}
+                        <option value="{{ subject.name }}">{{ subject.name }} ({{ subject.code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="day">Día:</label>
+                <select id="day" name="day" required>
+                    <option value="" disabled selected>Seleccione el día...</option>
+                    <option value="Lunes">Lunes</option>
+                    <option value="Martes">Martes</option>
+                    <option value="Miércoles">Miércoles</option>
+                    <option value="Jueves">Jueves</option>
+                    <option value="Viernes">Viernes</option>
+                    <option value="Sábado">Sábado</option>
+                </select>
+            </div>
+            
+            <div class="form-group time-group">
+                <label for="start_time">Hora de inicio:</label>
+                <input type="time" id="start_time" name="start_time" required>
+            </div>
+            
+            <div class="form-group time-group">
+                <label for="end_time">Hora de fin:</label>
+                <input type="time" id="end_time" name="end_time" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="semester">Semestre:</label>
+                <select id="semester" name="semester" required>
+                    <option value="" disabled selected>Seleccione el semestre...</option>
+                    <option value="1">1er Semestre</option>
+                    <option value="2">2do Semestre</option>
+                    <option value="3">3er Semestre</option>
+                    <option value="4">4to Semestre</option>
+                    <option value="5">5to Semestre</option>
+                    <option value="6">6to Semestre</option>
+                    <option value="7">7mo Semestre</option>
+                    <option value="8">8vo Semestre</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="classroom">Aula:</label>
+                <input type="text" id="classroom" name="classroom" placeholder="Ej: Aula 104, Laboratorio B" required>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Guardar Horario</button>
+                <a href="{{ url_for('coordinator_dashboard') }}" class="button btn-cancel">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function validateTime() {
+            const startTime = document.getElementById('start_time').value;
+            const endTime = document.getElementById('end_time').value;
+            
+            if (startTime >= endTime) {
+                alert("Error de registro: La hora de finalización debe ser posterior a la hora de inicio.");
+                return false; // Detiene el envío del formulario
+            }
+            return true; // Permite el envío
+        }
+    </script>
+{% endblock %}
+
+{% block styles %}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .admin-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #35424a;
+            border-bottom: 2px solid #e8491d;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: #e8491d;
+            outline: none;
+        }
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        button.btn-primary {
+            padding: 12px 20px;
+            background-color: #35424a;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            flex: 1;
+        }
+        button.btn-primary:hover {
+            background-color: #e8491d;
+        }
+        .btn-cancel {
+            padding: 12px 20px;
+            background-color: #ccc;
+            color: #333;
+            text-decoration: none;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 16px;
+            flex: 1;
+        }
+        .btn-cancel:hover {
+            background-color: #999;
+            color: white;
+        }
+    </style>
+{% endblock %}
