@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Panel del Coordinador - Sistema Académico{% endblock %}
+
+{% block content %}
+    <h2>Panel del Coordinador</h2>
+    
+    <div class="coordinator-panel">
+        <!-- SECCIÓN 1: TABLA DE GESTIÓN DE HORARIOS -->
+        <section class="table-section full-width">
+            <h3>Gestión y Confirmación de Horarios</h3>
+
+            <div class="filter-section">
+                <label for="semester_filter">Seleccionar Semestre para visualizar/gestionar:</label>
+                <select id="semester_filter" onchange="window.location.href='?semester_filter=' + this.value">
+                    <option value="">Todos los Semestres</option>
+                    {% for sem in available_semesters %}
+                        <option value="{{ sem }}" {% if sem == selected_semester %}selected{% endif %}>Semestre {{ sem }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Semestre</th>
+                            <th>Materia</th>
+                            <th>Profesor</th>
+                            <th>Día</th>
+                            <th>Hora Inicio</th>
+                            <th>Hora Fin</th>
+                            <th>Aula</th>
+                            <th>Inscritos</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for schedule in schedules %}
+                            <tr {% if schedule.status == 'pendiente' %}style="background-color: #fff9e6;"{% endif %}>
+                                <td data-label="Semestre">{{ schedule.semester }}</td>
+                                <td data-label="Materia">{{ schedule.subject }}</td>
+                                <td data-label="Profesor">{{ schedule.teacher }}</td>
+                                <td data-label="Día">{{ schedule.day }}</td>
+                                <td data-label="Hora Inicio">{{ schedule.start_time }}</td>
+                                <td data-label="Hora Fin">{{ schedule.end_time }}</td>
+                                <td data-label="Aula">{{ schedule.classroom }}</td>
+                                <td data-label="Inscritos">{{ enrollment_counts.get(schedule.id, 0) }}</td>
+                                <td data-label="Estado">
+                                    {% if schedule.status == 'confirmado' %}
+                                        <span style="color: green; font-weight: bold;">Confirmado</span>
+                                    {% elif schedule.status == 'denegado' %}
+                                        <span style="color: red; font-weight: bold;">Denegado</span>
+                                    {% else %}
+                                        <span style="color: #d39e00; font-weight: bold;">Pendiente</span>
+                                    {% endif %}
+                                </td>
+                                <td data-label="Acciones">
+                                    {% if schedule.status == 'pendiente' %}
+                                        <form method="POST" action="{{ url_for('update_schedule_status', schedule_id=schedule.id, new_status='confirmado') }}" style="display:inline;">
+                                            <button type="submit" style="background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-bottom: 5px;">Confirmar</button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('update_schedule_status', schedule_id=schedule.id, new_status='denegado') }}" style="display:inline;">
+                                            <button type="submit" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-bottom: 5px;">Denegar</button>
+                                        </form>
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('delete_schedule', schedule_id=schedule.id) }}" style="display:inline;">
+                                        <button type="submit" onclick="return confirm('¿Estás seguro de que quieres eliminar este horario?')" class="delete-button">Eliminar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="10" style="text-align: center;">No hay horarios propuestos para este filtro.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: PREVISUALIZACIÓN DE HORARIO -->
+        {% if selected_semester %}
+        <section class="preview-section full-width">
+            <h3>Previsualización del Horario Confirmado - Semestre {{ selected_semester }}</h3>
+            <div class="calendar-grid">
+                {% set days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'] %}
+                {% for day in days %}
+                    <div class="calendar-day">
+                        <h4 class="day-title">{{ day }}</h4>
+                        <div class="day-classes">
+                            <!-- Filtramos los horarios del día, que estén confirmados y ordenados por hora -->
+                            {% set day_schedules = schedules | selectattr('day', 'equalto', day) | selectattr('status', 'equalto', 'confirmado') | sort(attribute='start_time') | list %}
+                            
+                            {% for s in day_schedules %}
+                                <div class="class-card">
+                                    <div class="class-time">{{ s.start_time }} - {{ s.end_time }}</div>
+                                    <div class="class-subject">{{ s.subject }}</div>
+                                    <div class="class-details">{{ s.teacher }} | {{ s.classroom }}</div>
+                                </div>
+                            {% else %}
+                                <div class="empty-class">Libre</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% else %}
+        <section class="preview-section full-width" style="text-align: center; color: #666; padding: 40px;">
+            <p><strong>Selecciona un semestre en el filtro superior</strong> para generar una previsualización del calendario de clases confirmadas.</p>
+        </section>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Ajustes para el panel unificado */
+    .full-width {
+        width: 100%;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+        box-sizing: border-box;
+    }
+    
+    /* Estilos para el calendario */
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .calendar-day {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .day-title {
+        background-color: #35424a;
+        color: white;
+        text-align: center;
+        margin: 0;
+        padding: 10px;
+        font-size: 15px;
+        letter-spacing: 0.5px;
+    }
+    .day-classes {
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .class-card {
+        background-color: #e9f5ff;
+        border-left: 4px solid #e8491d;
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 13px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .class-time {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+        border-bottom: 1px solid #cce5ff;
+        padding-bottom: 4px;
+    }
+    .class-subject {
+        font-weight: bold;
+        color: #35424a;
+        margin-bottom: 3px;
+    }
+    .class-details {
+        color: #555;
+        font-size: 12px;
+    }
+    .empty-class {
+        text-align: center;
+        color: #aaa;
+        font-style: italic;
+        padding: 15px 0;
+    }
+</style>
+{% endblock %}

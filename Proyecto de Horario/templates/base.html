@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema Académico{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <header>
+        <h1>Sistema Académico</h1>
+    </header>
+    
+    <nav>
+        {% if 'username' in session %}
+            <a href="{{ url_for('home') }}">Inicio</a>
+            <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+            <span class="nav-user-info" style="float: right;">
+                Bienvenido, {{ session['fullname'] }} ({{ session['role'] }})
+            </span>
+        {% else %}
+            <a href="{{ url_for('login') }}">Iniciar Sesión</a>
+            <a href="{{ url_for('register') }}">Registrarse</a>
+        {% endif %}
+    </nav>
+    
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
