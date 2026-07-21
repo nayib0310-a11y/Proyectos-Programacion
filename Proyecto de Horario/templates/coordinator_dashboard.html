@@ -80,36 +80,60 @@
             </div>
         </section>
 
-        <!-- SECCIÓN 2: PREVISUALIZACIÓN DE HORARIO -->
+      <!-- SECCIÓN 2: PREVISUALIZACIÓN DE HORARIO (TIPO MATRIZ) -->
         {% if selected_semester %}
         <section class="preview-section full-width">
-            <h3>Previsualización del Horario Confirmado - Semestre {{ selected_semester }}</h3>
-            <div class="calendar-grid">
-                {% set days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'] %}
-                {% for day in days %}
-                    <div class="calendar-day">
-                        <h4 class="day-title">{{ day }}</h4>
-                        <div class="day-classes">
-                            <!-- Filtramos los horarios del día, que estén confirmados y ordenados por hora -->
-                            {% set day_schedules = schedules | selectattr('day', 'equalto', day) | selectattr('status', 'equalto', 'confirmado') | sort(attribute='start_time') | list %}
-                            
-                            {% for s in day_schedules %}
-                                <div class="class-card">
-                                    <div class="class-time">{{ s.start_time }} - {{ s.end_time }}</div>
-                                    <div class="class-subject">{{ s.subject }}</div>
-                                    <div class="class-details">{{ s.teacher }} | {{ s.classroom }}</div>
-                                </div>
-                            {% else %}
-                                <div class="empty-class">Libre</div>
+            <h3 style="text-align: center; text-transform: uppercase;">Horario de Clases - Semestre {{ selected_semester }}</h3>
+            
+            {% set day_map = {'Lunes': 'LUN', 'Martes': 'MAR', 'Miércoles': 'MIE', 'Jueves': 'JUE', 'Viernes': 'VIE', 'Sábado': 'SAB', 'Domingo': 'DOM'} %}
+            {% set days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] %}
+            
+            {% set confirmed_schedules = schedules | selectattr('status', 'equalto', 'confirmado') | list %}
+            
+            <!-- Extraemos y ordenamos las horas únicas -->
+            {% set time_slots = [] %}
+            {% for s in confirmed_schedules %}
+                {% set ts = s.start_time ~ ' - ' ~ s.end_time %}
+                {% if ts not in time_slots %}
+                    {% set _ = time_slots.append(ts) %}
+                {% endif %}
+            {% endfor %}
+            
+            <div class="table-responsive">
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th>ENT / SAL</th>
+                            {% for d in days %}
+                            <th>{{ day_map[d] }}</th>
                             {% endfor %}
-                        </div>
-                    </div>
-                {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ts in time_slots|sort %}
+                            {% set times = ts.split(' - ') %}
+                            {% set st = times[0] %}
+                            {% set et = times[1] %}
+                            <tr>
+                                <td class="time-cell">{{ st }} - {{ et }}</td>
+                                {% for d in days %}
+                                    <td>
+                                        {% for s in confirmed_schedules %}
+                                            {% if s.day == d and s.start_time == st and s.end_time == et %}
+                                                {% set ns = namespace(code=s.subject) %}
+                                                {% for sub in subjects %}
+                                                    {% if sub.name == s.subject %}{% set ns.code = sub.code %}{% endif %}
+                                                {% endfor %}
+                                                <div class="matrix-code">{{ ns.code }}</div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        </section>
-        {% else %}
-        <section class="preview-section full-width" style="text-align: center; color: #666; padding: 40px;">
-            <p><strong>Selecciona un semestre en el filtro superior</strong> para generar una previsualización del calendario de clases confirmadas.</p>
         </section>
         {% endif %}
     </div>
@@ -117,7 +141,7 @@
 
 {% block styles %}
 <style>
-    /* Ajustes para el panel unificado */
+    /* Estilos globales y de coordinador */
     .full-width {
         width: 100%;
         background: white;
@@ -128,63 +152,32 @@
         box-sizing: border-box;
     }
     
-    /* Estilos para el calendario */
-    .calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 15px;
-        margin-top: 20px;
-    }
-    .calendar-day {
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        overflow: hidden;
-    }
-    .day-title {
-        background-color: #35424a;
-        color: white;
+    /* Estilos para el Horario tipo Matriz */
+    .matrix-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 11px;
         text-align: center;
-        margin: 0;
-        padding: 10px;
-        font-size: 15px;
-        letter-spacing: 0.5px;
+        background-color: white;
     }
-    .day-classes {
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
+    .matrix-table th, .matrix-table td {
+        border: 1px solid black;
+        padding: 4px;
+        height: 25px;
     }
-    .class-card {
-        background-color: #e9f5ff;
-        border-left: 4px solid #e8491d;
-        padding: 10px;
-        border-radius: 4px;
-        font-size: 13px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    .matrix-table th {
+        background-color: white;
+        font-weight: bold;
     }
-    .class-time {
+    .time-cell {
+        font-weight: bold;
+        white-space: nowrap;
+        width: 90px;
+    }
+    .matrix-code {
         font-weight: bold;
         color: #333;
-        margin-bottom: 5px;
-        border-bottom: 1px solid #cce5ff;
-        padding-bottom: 4px;
-    }
-    .class-subject {
-        font-weight: bold;
-        color: #35424a;
-        margin-bottom: 3px;
-    }
-    .class-details {
-        color: #555;
-        font-size: 12px;
-    }
-    .empty-class {
-        text-align: center;
-        color: #aaa;
-        font-style: italic;
-        padding: 15px 0;
     }
 </style>
 {% endblock %}

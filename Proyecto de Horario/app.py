@@ -181,7 +181,8 @@ def coordinator_dashboard():
                            schedules=schedules,
                            enrollment_counts=schedule_enrollment_counts,
                            available_semesters=available_semesters, 
-                           selected_semester=selected_semester)
+                           selected_semester=selected_semester,
+                           subjects=read_subjects()) 
 
 @app.route('/teacher', methods=['GET', 'POST'])
 def teacher_dashboard():
@@ -231,7 +232,8 @@ def student_dashboard():
     return render_template('student_dashboard.html', fullname=session['fullname'],
                            available_schedules=[
                                s for s in all_schedules if s['id'] not in enrolled_schedule_ids and s['status'] == 'confirmado'],
-                           student_schedules=[s for s in all_schedules if s['id'] in enrolled_schedule_ids])
+                           student_schedules=[s for s in all_schedules if s['id'] in enrolled_schedule_ids],
+                           subjects=read_subjects()) # <-- Nueva línea añadida
 
 @app.route('/update_schedule_status/<int:schedule_id>/<string:new_status>', methods=['POST'])
 def update_schedule_status(schedule_id, new_status):

@@ -7,20 +7,14 @@
     
     <section class="student-section">
         <h3>Horarios Disponibles para Inscripción</h3>
-        <p>Selecciona una materia para inscribirte:</p>
         
         <div class="table-responsive">
             <table>
+                <!-- Tabla original de inscripción (Se mantiene igual) -->
                 <thead>
                     <tr>
-                        <th>Semestre</th>
-                        <th>Materia</th>
-                        <th>Profesor</th>
-                        <th>Día</th>
-                        <th>Hora Inicio</th>
-                        <th>Hora Fin</th>
-                        <th>Aula</th>
-                        <th>Acción</th>
+                        <th>Semestre</th><th>Materia</th><th>Profesor</th><th>Día</th>
+                        <th>Hora Inicio</th><th>Hora Fin</th><th>Aula</th><th>Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,9 +35,7 @@
                             </td>
                         </tr>
                     {% else %}
-                        <tr>
-                            <td colspan="8" style="text-align: center;">No hay horarios disponibles para inscribir en este momento.</td>
-                        </tr>
+                        <tr><td colspan="8" style="text-align: center;">No hay horarios disponibles.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -52,45 +44,115 @@
 
     <hr class="section-divider">
 
-    <section class="student-section">
+    <section class="student-section print-container">
         <div class="header-with-action">
-            <h3>Mi Horario de Clases</h3>
-            <button onclick="downloadPDF()" class="btn-secondary">Descargar Mi Horario PDF</button>
+            <h3>Comprobante de Inscripción</h3>
+            <button onclick="downloadPDF()" class="btn-secondary">Descargar PDF</button>
         </div>
         
-        <div class="table-responsive">
-            <table id="student-schedule-table">
+        <!-- Tabla 1: Asignaturas -->
+        <div class="table-responsive" style="margin-bottom: 30px;">
+            <table id="subjects-table" class="matrix-table">
                 <thead>
                     <tr>
-                        <th>Semestre</th>
-                        <th>Materia</th>
-                        <th>Día</th>
-                        <th>Hora Inicio</th>
-                        <th>Hora Fin</th>
-                        <th>Profesor</th>
-                        <th>Aula</th>
+                        <th>COD-ASIG</th>
+                        <th>ASIGNATURAS</th>
+                        <th>DOCENTE</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for schedule in student_schedules %}
+                    {% for s in student_schedules %}
+                        {% set ns = namespace(code=s.subject) %}
+                        {% for sub in subjects %}
+                            {% if sub.name == s.subject %}{% set ns.code = sub.code %}{% endif %}
+                        {% endfor %}
                         <tr>
-                            <td data-label="Semestre">{{ schedule.semester }}</td>
-                            <td data-label="Materia">{{ schedule.subject }}</td>
-                            <td data-label="Día">{{ schedule.day }}</td>
-                            <td data-label="Hora Inicio">{{ schedule.start_time }}</td>
-                            <td data-label="Hora Fin">{{ schedule.end_time }}</td>
-                            <td data-label="Profesor">{{ schedule.teacher }}</td>
-                            <td data-label="Aula">{{ schedule.classroom }}</td>
+                            <td>{{ ns.code }}</td>
+                            <td>{{ s.subject | upper }}</td>
+                            <td>{{ s.teacher | upper }}</td>
                         </tr>
                     {% else %}
+                        <tr><td colspan="3" style="text-align: center;">Sin materias inscritas</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tabla 2: Horario Matriz -->
+        <h4 style="text-align: center; text-transform: uppercase;">Horario de Clases</h4>
+        {% set day_map = {'Lunes': 'LUN', 'Martes': 'MAR', 'Miércoles': 'MIE', 'Jueves': 'JUE', 'Viernes': 'VIE', 'Sábado': 'SAB', 'Domingo': 'DOM'} %}
+        {% set days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] %}
+        
+        {% set time_slots = [] %}
+        {% for s in student_schedules %}
+            {% set ts = s.start_time ~ ' - ' ~ s.end_time %}
+            {% if ts not in time_slots %}
+                {% set _ = time_slots.append(ts) %}
+            {% endif %}
+        {% endfor %}
+        
+        <div class="table-responsive">
+            <table id="matrix-table" class="matrix-table">
+                <thead>
+                    <tr>
+                        <th>ENT / SAL</th>
+                        {% for d in days %}
+                        <th>{{ day_map[d] }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ts in time_slots|sort %}
+                        {% set times = ts.split(' - ') %}
+                        {% set st = times[0] %}
+                        {% set et = times[1] %}
                         <tr>
-                            <td colspan="7" style="text-align: center;">Aún no te has inscrito en ninguna materia.</td>
+                            <td class="time-cell">{{ st }} - {{ et }}</td>
+                            {% for d in days %}
+                                <td>
+                                    {% for s in student_schedules %}
+                                        {% if s.day == d and s.start_time == st and s.end_time == et %}
+                                            {% set ns = namespace(code=s.subject) %}
+                                            {% for sub in subjects %}
+                                                {% if sub.name == s.subject %}{% set ns.code = sub.code %}{% endif %}
+                                            {% endfor %}
+                                            {{ ns.code }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            {% endfor %}
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </section>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .matrix-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+        font-size: 11px;
+        text-align: center;
+        background-color: white;
+    }
+    .matrix-table th, .matrix-table td {
+        border: 1px solid black;
+        padding: 4px;
+        height: 25px;
+    }
+    .matrix-table th {
+        font-weight: bold;
+    }
+    .time-cell {
+        font-weight: bold;
+        white-space: nowrap;
+        width: 80px;
+    }
+</style>
 {% endblock %}
 
 {% block scripts %}
@@ -101,47 +163,55 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
 
-            doc.setFontSize(16);
-            doc.text("Mi Horario de Clases - {{ session['fullname'] }}", 14, 22);
-
-            const table = document.getElementById('student-schedule-table');
-            const headers = ['Semestre', 'Materia', 'Día', 'Hora Inicio', 'Hora Fin', 'Profesor', 'Aula'];
-            const data = [];
+            // Encabezado Formal
+            doc.setFontSize(22);
+            doc.setTextColor(0, 51, 153);
+            doc.setFont("helvetica", "bold");
+            doc.text("COMPROBANTE", 14, 25);
+            doc.text("DE INSCRIPCIÓN", 14, 35);
             
-            // Excluimos la fila de "Estado vacío" si no hay materias
-            const rows = table.querySelectorAll('tbody tr');
-            if (rows.length === 1 && rows[0].cells.length === 1) {
+            // Detalles del Estudiante adaptados al contexto
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            doc.text("NÚCLEO CARACAS", 195, 25, { align: 'right' });
+            
+            doc.text("ESTUDIANTE: {{ session['fullname'] | upper }}", 14, 55);
+            doc.text("PROGRAMA: INGENIERÍA DE SISTEMAS", 14, 61);
+
+            // Verificación para evitar generar PDFs vacíos
+            if (document.querySelectorAll('#subjects-table tbody tr').length === 1 && 
+                document.querySelector('#subjects-table tbody td').colSpan === 3) {
                 alert("No tienes materias inscritas para exportar.");
                 return;
             }
 
-            rows.forEach(row => {
-                const rowData = [];
-                for(let i = 0; i < 7; i++) {
-                    rowData.push(row.cells[i] ? row.cells[i].innerText : "");
-                }
-                data.push(rowData);
-            });
-
+            // Tabla 1: Asignaturas
             doc.autoTable({
-                head: [headers],
-                body: data,
-                startY: 30,
-                theme: 'striped',
-                headStyles: { fillColor: [74, 150, 78], textColor: 255 },
-                styles: { fontSize: 9, cellPadding: 2 },
-                columnStyles: {
-                    0: { cellWidth: 15 },
-                    1: { cellWidth: 45 },
-                    2: { cellWidth: 20 },
-                    3: { cellWidth: 20 },
-                    4: { cellWidth: 20 },
-                    5: { cellWidth: 35 },
-                    6: { cellWidth: 15 }
-                }
+                html: '#subjects-table',
+                startY: 70,
+                theme: 'grid',
+                headStyles: { fillColor: [255, 255, 255], textColor: [0,0,0], lineColor: [0,0,0], lineWidth: 0.1, halign: 'center' },
+                bodyStyles: { lineColor: [0,0,0], lineWidth: 0.1, halign: 'center', fontSize: 8 },
+                styles: { cellPadding: 1.5 }
             });
 
-            doc.save('mi_horario_clases.pdf');
+            // Título de la Tabla 2
+            let finalY = doc.lastAutoTable.finalY || 70;
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text("HORARIO DE CLASES", 105, finalY + 10, { align: 'center' });
+
+            // Tabla 2: Cuadrícula del Horario
+            doc.autoTable({
+                html: '#matrix-table',
+                startY: finalY + 15,
+                theme: 'grid',
+                headStyles: { fillColor: [255, 255, 255], textColor: [0,0,0], lineColor: [0,0,0], lineWidth: 0.1, halign: 'center' },
+                bodyStyles: { lineColor: [0,0,0], lineWidth: 0.1, halign: 'center', fontSize: 8 },
+                styles: { cellPadding: 1.5 }
+            });
+
+            doc.save('comprobante_inscripcion.pdf');
         }
     </script>
 {% endblock %}
